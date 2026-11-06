@@ -1,3 +1,6 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#8d8a83">
+<style>:root{color-scheme:light}html,body{margin:0;height:100%;background:#8d8a83;overflow:hidden;overscroll-behavior:none;touch-action:none}</style>
 <title>Kafila Rush</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -41,15 +44,16 @@ body{margin:0;background:var(--ground);color:var(--ink);font:400 15px/1.45 var(-
 .role{display:flex;align-items:center;gap:5px;padding:3px 9px 3px 4px;border-radius:99px;background:var(--veil);font:800 11px var(--font-body)}
 .role i{width:17px;height:17px;border-radius:50%;display:grid;place-items:center;font:800 10px var(--font-body);font-style:normal;color:#fff;background:var(--c)}
 .role.med i{color:#d02a20}
-#live{position:absolute;right:max(12px,env(safe-area-inset-right,0px));top:172px;width:188px;padding:7px 10px;border-radius:12px;background:var(--veil);pointer-events:none;display:flex;gap:7px;align-items:center;font:600 12px var(--font-body);color:var(--ink)}
-#job{position:absolute;right:max(12px,env(safe-area-inset-right,0px));top:214px;width:188px;padding:7px 10px;border-radius:12px;background:var(--veil);pointer-events:none;display:flex;gap:7px;align-items:center;font:600 12px var(--font-body);color:var(--ink)}
+#live{padding:7px 10px;border-radius:12px;background:var(--veil);pointer-events:none;display:flex;gap:7px;align-items:center;font:600 12px var(--font-body);color:var(--ink)}
+#job{padding:7px 10px;border-radius:12px;background:var(--veil);pointer-events:none;display:flex;gap:7px;align-items:center;font:600 12px var(--font-body);color:var(--ink)}
 #job b{flex:none;font:400 11px var(--font-display);color:#ffd84a;letter-spacing:.08em}
 #job span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #live i{flex:none;width:9px;height:9px;border-radius:50%;background:#ff3b30;animation:livepulse 1s infinite}
 #live b{flex:none;font:400 12px var(--font-display);color:#ff6b5e;letter-spacing:.08em}
 #live span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @keyframes livepulse{50%{opacity:.25}}
-#board{position:absolute;right:max(12px,env(safe-area-inset-right,0px));top:62px;width:188px;padding:8px 10px;border-radius:12px;background:var(--veil);pointer-events:none}
+#side{position:absolute;right:max(12px,env(safe-area-inset-right,0px));top:62px;width:188px;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+#board{padding:8px 10px;border-radius:12px;background:var(--veil);pointer-events:none}
 #board .bt{font:800 10px var(--font-body);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-dim);margin-bottom:4px}
 #board ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
 #board li{display:grid;grid-template-columns:16px 1fr auto;gap:6px;align-items:baseline;font:600 12px var(--font-body);padding:1px 0}
@@ -180,9 +184,9 @@ details li{margin:2px 0}
     </div>
     <div id="roles"></div>
   </div>
-  <div id="job" hidden><b>JOB</b><span id="jobTxt"></span></div>
+  <div id="side"><div id="board" hidden><div class="bt">Biggest kafila</div><ol id="boardList"></ol></div>
   <div id="live" hidden><i></i><b>LIVE</b><span id="liveTxt"></span></div>
-  <div id="board" hidden><div class="bt">Biggest kafila</div><ol id="boardList"></ol></div>
+  <div id="job" hidden><b>JOB</b><span id="jobTxt"></span></div></div>
 
   <div id="toast" role="status" aria-live="polite"></div>
   <div id="stick" hidden><div id="knob"></div></div>
@@ -250,13 +254,13 @@ const TP = {
 /* ---------- state ---------- */
 const G = {
   state: 'menu', level: 1, score: 0, lives: 3, time: 0, hype: 0, need: 100, invuln: 0, name: 'Player',
-  cd: 0, stamina: STA_MAX, staDelay: 0, shake: 0, best: 0, rec: 0, lost: 0, det: 0, hints: {}, popT: 0, leaderF: true, police: false, coins: 0, wpn: 0, sd: 0, sdT: 0, job: null, jobCd: 0, mp: false, flag: false, shopCd: 0, donT: 0, pc: null, pnear: null, pstun: 0, arrests: 0, quota: 14, threat: 0, gassed: 0, jetted: 0, maxK: 1, boardT: 0,
+  cd: 0, stamina: STA_MAX, staDelay: 0, shake: 0, best: 0, rec: 0, lost: 0, det: 0, hints: {}, popT: 0, leaderF: true, police: false, coins: 0, wpn: 0, gnear: null, gcd: 0, sd: 0, sdT: 0, job: null, jobCd: 0, mp: false, flag: false, shopCd: 0, donT: 0, pc: null, pnear: null, pstun: 0, arrests: 0, quota: 14, threat: 0, gassed: 0, jetted: 0, maxK: 1, boardT: 0,
   caught: null, brk: 0, ride: null, nearRide: null, rx: 0, ry: 0, hide: null, hideT: 0, hideMax: 1, hideAge: 0, safeT: 0, near: null,
 };
 try { G.police = localStorage.getItem('kafilaRole') === 'police'; G.mp = localStorage.getItem('kafilaMode') === 'mp'; } catch (e) {}
 try { G.best = +localStorage.getItem('kafilaRushBest') || 0; G.name = (localStorage.getItem('kafilaName') || '').slice(0, 14); } catch (e) {}
 let L = null;
-const MP = { on: false, room: null, off: null, ghosts: new Map(), cut: 0, t: 0, busy: false };
+const MP = { on: false, room: null, off: null, ghosts: new Map(), cut: 0, t: 0, busy: false, me: null, seq: 0, pend: null, ack: null, inbox: [], seen: {}, broken: new Set() };
 const cam = { x: CX, y: 600, z: 1 };
 const view = { w: 800, h: 600, dpr: 1 };
 
@@ -325,8 +329,8 @@ async function submitScore() {
 async function fillHof() {
   const el = $('#hof'); if (!el) return;
   let rows = [];
-  if (DBH) { try { const q = await DBH.collection('scores').orderBy('score', 'desc').limit(6).get(); rows = q.docs.map((d) => d.data() || {}); } catch (e) { rows = []; } }
-  if (!rows.length) rows = localTop().slice(0, 6);
+  if (DBH) { try { const q = await DBH.collection('scores').orderBy('score', 'desc').limit(10).get(); rows = q.docs.map((d) => d.data() || {}); } catch (e) { rows = []; } }
+  if (!rows.length) rows = localTop().slice(0, 10);
   const list = $('#hof'); if (!list) return;
   list.textContent = '';
   if (!rows.length) { const li = document.createElement('li'); li.style.gridTemplateColumns = '1fr'; li.textContent = 'No scores yet. Be the first.'; list.appendChild(li); return; }
@@ -692,11 +696,12 @@ function spawnGuards() {
 function loadLevel(n) {
   L = buildLevel(n); buildGrid();
   G.level = n; G.time = 0; G.hype = 0; G.need = 100 + 12 * (n - 1); G.invuln = 0; G.cd = 0;
-  G.stamina = STA_MAX; G.rec = 0; G.lost = 0; G.det = 0; G.shake = 0; G.gassed = 0; G.jetted = 0; G.maxK = 1; G.jail = null; G.metroCd = 0; G.metroFrom = -1; G.pc = null; G.pnear = null; G.pstun = 0; G.shopCd = 2; G.sdT = 0; G.job = null; G.jobCd = 0; G.arrests = 0; G.threat = 0; G.quota = 14 + 4 * n; G.boardT = 0; G.caught = null; G.brk = 0; G.hide = null; G.hideT = 0; G.safeT = 0; G.near = null; G.ride = null; G.nearRide = null;
+  G.stamina = STA_MAX; G.rec = 0; G.lost = 0; G.det = 0; G.shake = 0; G.gassed = 0; G.jetted = 0; G.maxK = 1; G.jail = null; G.metroCd = 0; G.metroFrom = -1; G.pc = null; G.pnear = null; G.pstun = 0; G.shopCd = 2; G.gnear = null; G.gcd = 0; MP.broken = new Set(); MP.pend = null; MP.ack = null; G.sdT = 0; G.job = null; G.jobCd = 0; G.arrests = 0; G.threat = 0; G.quota = 14 + 4 * n; G.boardT = 0; G.caught = null; G.brk = 0; G.hide = null; G.hideT = 0; G.safeT = 0; G.near = null; G.ride = null; G.nearRide = null;
   const p = makeCrowd(0, CX, L.H - 230, true); p.isPolice = G.police; L.crowds.push(p);
-  const na = Math.max(1, (G.police ? 4 : (n < 2 ? 2 : 3)) - (MP.on ? MP.cut : 0)), names = AI_NAMES.slice().sort(() => Math.random() - 0.5);
+  const na = Math.max(2, 5 - (MP.on ? MP.cut : 0)), names = AI_NAMES.slice().sort(() => Math.random() - 0.5);
   for (let i = 0; i < na; i++) { const c = makeCrowd(i + 1, CX + (i - (na - 1) / 2) * 190, L.H - 280, false); c.name = names[i]; if (G.police) c.ai.want = 22 + Math.floor(Math.random() * 16) + 3 * n; L.crowds.push(c); }
-  spawnSites(); spawnGuards(); placeSpecial();
+  spawnSites(); spawnGuards();
+  { const _r = Math.random; if (MP.on) Math.random = mulberry32(424242); try { placeSpecial(); } finally { Math.random = _r; } }
   cam.x = p.leader.x; cam.y = p.leader.y - 80;
 }
 
@@ -763,7 +768,7 @@ function holdButton(el, on, off) {
   const up = () => { el.classList.remove('pressed'); off(); };
   el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); el.addEventListener('lostpointercapture', up);
 }
-holdButton($('#btnRun'), () => { if (G.caught) breakTap(); else if (G.police && G.pnear && !G.pc) startPoliceDetain(); else runBtn = true; }, () => { runBtn = false; });
+holdButton($('#btnRun'), () => { if (G.caught) breakTap(); else if (G.police && !G.pc && G.pnear) startPoliceDetain(); else if (G.police && !G.pc && G.gnear) startGhostDetain(G.gnear); else runBtn = true; }, () => { runBtn = false; });
 holdButton($('#btnCheer'), () => doAction(), () => {});
 
 function readInput() {
@@ -1510,7 +1515,7 @@ function updateBarricades(dt) {
     if (cnt >= o.req) {
       o.prog += dt * 0.45 * Math.min(3, cnt / o.req); o.wob = Math.max(o.wob, 0.6);
       if (o.prog >= 1) {
-        o.away = true; o.wob = 0; shake(0.9); sfx.shove();
+        if (MP.on) MP.broken.add(L.barrs.indexOf(o)); o.away = true; o.wob = 0; shake(0.9); sfx.shove();
         for (let k = 0; k < 26; k++) L.parts.push({ x: o.x + Math.random() * o.w, y: o.y + 10, vx: rnd(-140, 140), vy: rnd(-140, 140), life: 0.9, max: 0.9, col: k % 2 ? '#e8452c' : '#f2efe6', s: 5 });
         floatText(cx, o.y - 14, 'Barricade broken!', '#ffffff'); hint('barrBreak', 'The barricade broke under your crowd. Push on through the gap.');
       }
@@ -1556,6 +1561,9 @@ function updatePolicePlay(dt) {
   if (G.pstun > 0) G.pstun -= dt;
   G.pnear = null;
   if (!G.pc && !(G.pstun > 0)) for (let i = 1; i < L.crowds.length; i++) { const c = L.crowds[i]; if (c.jailT > 0 || c.carried || c.noGrab > 0) continue; if ((c.leader.x - P.x) ** 2 + (c.leader.y - P.y) ** 2 < 46 * 46) { G.pnear = c; break; } }
+  G.gnear = null; if (G.gcd > 0) G.gcd -= dt;
+  if (MP.on && !G.pc && !G.pnear && !MP.pend && !(G.pstun > 0) && !(G.gcd > 0)) for (const g of MP.ghosts.values()) { if (g.pol || g.sf) continue; if ((g.x - P.x) ** 2 + (g.y - P.y) ** 2 < 46 * 46) { G.gnear = g; break; } }
+  if (G.gnear) hint('gdetain', 'A real player is right next to you. Tap DETAIN to arrest them.');
   if (G.pnear) hint('detain', 'A kafila leader is right next to you. Tap DETAIN, then walk them to a police van before they break free.');
   if (G.pc) updatePoliceCarry(dt);
   const hit = (x, y, r) => (x - P.x) ** 2 + (y - P.y) ** 2 < r * r;
@@ -1760,54 +1768,95 @@ function drawJobs(t, v) {
 }
 
 
-/* ---------- multiplayer: other players' kafilas appear as live ghosts ---------- */
+/* ---------- multiplayer: one shared room, everyone sees everyone, police and protesters together ---------- */
+function mpBurst(o) { for (let k = 0; k < 20; k++) L.parts.push({ x: o.x + Math.random() * o.w, y: o.y + 10, vx: rnd(-140, 140), vy: rnd(-140, 140), life: 0.9, max: 0.9, col: k % 2 ? '#e8452c' : '#f2efe6', s: 5 }); }
 function mpPeers(peers) {
   const seen = new Set();
   for (const pr of peers) {
-    const d = pr.presence; if (pr.isMe || pr.kind !== 'viewer' || !d || d.kr !== 1) continue;
+    if (pr.isMe) { if (pr.sameTab) MP.me = pr.peer; continue; }
+    const d = pr.presence; if (pr.kind !== 'viewer' || !d || d.kr !== 1) continue;
     const x = +d.x, y = +d.y; if (!isFinite(x) || !isFinite(y)) continue;
     seen.add(pr.peer); let g = MP.ghosts.get(pr.peer);
-    if (!g) { g = { x, y, face: 0, st: newStyle(d.f === 1), fst: [newStyle(), newStyle(), newStyle(), newStyle()], name: 'Player', sz: 1, pol: false }; g.st.role = null; for (const q of g.fst) q.role = null; MP.ghosts.set(pr.peer, g); g.name = cleanName(d.n) || 'Player'; toast(g.name + ' joined the match. Their kafila shows on your map.', 3500); }
-    g.tx = clamp(x, 0, W); g.ty = clamp(y, 0, L ? L.H : 4000); g.tf = +d.fa || 0; g.sz = clamp(Math.floor(+d.sz) || 1, 1, 500); g.pol = d.pl === 1; g.name = cleanName(d.n) || 'Player';
+    if (!g) {
+      g = { peer: pr.peer, x, y, face: 0, tx: x, ty: y, tf: 0, st: newStyle(d.f === 1), fst: [newStyle(), newStyle(), newStyle(), newStyle()], name: 'Player', sz: 1, pol: false, sf: false, pg: { type: 'const', carry: null, cs: '', stun: 0, target: null, fall: 0, vx: 0, vy: 0 } };
+      g.st.role = null; for (const q of g.fst) q.role = null; MP.ghosts.set(pr.peer, g);
+      toast((cleanName(d.n) || 'Player') + ' joined as ' + (d.pl === 1 ? 'police' : 'a protester') + '.', 3500);
+    }
+    g.tx = clamp(x, 0, W); g.ty = clamp(y, 0, L ? L.H : 4000); g.tf = +d.fa || 0; g.sz = clamp(Math.floor(+d.sz) || 1, 1, 500); g.pol = d.pl === 1; g.sf = d.sf === 1; g.name = cleanName(d.n) || 'Player';
+    if (L && Array.isArray(d.br)) for (const i of d.br.slice(0, 40)) { const o = L.barrs[i | 0]; if (o && !o.away) { o.away = true; o.wob = 0; mpBurst(o); } }
+    if (MP.me && d.dt === MP.me && Number.isInteger(d.ds) && MP.seen[pr.peer] !== d.ds) { MP.seen[pr.peer] = d.ds; MP.inbox.push({ peer: pr.peer, ds: d.ds }); }
+    if (MP.pend && d.at === MP.me && d.ak === MP.pend.seq && MP.pend.peer === pr.peer) MP.pend.ok = true;
   }
-  for (const k of [...MP.ghosts.keys()]) if (!seen.has(k)) { toast(MP.ghosts.get(k).name + ' left the match.', 2500); MP.ghosts.delete(k); }
+  for (const k of [...MP.ghosts.keys()]) if (!seen.has(k)) { toast(MP.ghosts.get(k).name + ' left the match.', 2500); MP.ghosts.delete(k); if (MP.pend && MP.pend.peer === k) MP.pend = null; }
 }
 async function mpEnter() {
   if (MP.on) return true;
   toast('Connecting to multiplayer…', 2500);
   let r = null;
   try { r = (window.claude && claude.use) ? await Promise.race([claude.use('room'), new Promise((res) => setTimeout(() => res(null), 4000))]) : null; } catch (e) { r = null; }
-  if (!r) { toast('Multiplayer needs a signed-in viewer with access to this page, so you are playing offline with bots.', 6500); return false; }
+  if (!r) { toast('Multiplayer is not available here. It runs only inside Claude for signed-in viewers with access to the page. Playing offline with bots.', 7000); return false; }
   let rm = r; try { rm = await r.join('kafila-arena'); } catch (e) { rm = r; }
-  MP.room = rm; MP.on = true; MP.t = 0;
+  MP.room = rm; MP.on = true; MP.t = 0; MP.seq = 0; MP.pend = null; MP.ack = null; MP.inbox = []; MP.seen = {}; MP.broken = new Set();
   try { MP.off = rm.onPeers((ch) => mpPeers(ch.peers), () => {}); } catch (e) {}
-  await new Promise((res) => setTimeout(res, 1500));
-  MP.cut = Math.min(MP.ghosts.size, 2);
-  toast(MP.ghosts.size ? MP.ghosts.size + ' other player' + (MP.ghosts.size > 1 ? 's' : '') + ' here. Bots step aside for them.' : 'Multiplayer on. Nobody else is here yet, so bots play with you.', 4500);
+  await new Promise((res) => setTimeout(res, 1600));
+  MP.cut = Math.min(MP.ghosts.size, 3);
+  toast(MP.ghosts.size ? MP.ghosts.size + ' other player' + (MP.ghosts.size > 1 ? 's' : '') + ' in the room. Bots step aside for them.' : 'Multiplayer on. Nobody else is here yet, so bots play with you. Others who join later appear on your map.', 5000);
   return true;
 }
 function mpStop() {
   if (!MP.on) return; MP.on = false; MP.cut = 0;
   try { if (MP.off) MP.off(); } catch (e) {} MP.off = null;
-  try { MP.room.presence({ kr: null, n: null, x: null, y: null, fa: null, sz: null, f: null, pl: null }); if (MP.room.leave) MP.room.leave(); } catch (e) {}
-  MP.room = null; MP.ghosts.clear();
+  try { MP.room.presence({ kr: null, n: null, x: null, y: null, fa: null, sz: null, f: null, pl: null, sf: null, br: null, dt: null, ds: null, ak: null, at: null }); if (MP.room.leave) MP.room.leave(); } catch (e) {}
+  MP.room = null; MP.ghosts.clear(); MP.pend = null; MP.ack = null; MP.inbox = [];
+}
+function mpSend() {
+  const c = L.crowds[0], P = c.leader;
+  try { MP.room.presence({ kr: 1, n: G.name, x: Math.round(P.x), y: Math.round(P.y), fa: Math.round(P.face * 100) / 100, sz: G.police ? 1 : c.members.length + 1, f: G.leaderF ? 1 : 0, pl: G.police ? 1 : 0,
+    sf: (!G.police && (G.hide || G.safeT > 0 || G.jail || G.caught || G.invuln > 0)) ? 1 : 0, br: [...MP.broken], dt: MP.pend ? MP.pend.peer : null, ds: MP.seq, ak: MP.ack ? MP.ack.seq : null, at: MP.ack ? MP.ack.to : null }); } catch (e) {}
+}
+function mpHandleDetain(q) {
+  const g = MP.ghosts.get(q.peer); if (!g || !g.pol || G.police || G.state !== 'playing' || G.jail || G.caught || G.hide || G.safeT > 0 || G.invuln > 0) return;
+  const c = L.crowds[0], P = c.leader; if (Math.hypot(g.x - P.x, g.y - P.y) > 140) return;
+  let gd = null, bd = 1e12; for (const o of L.guards) { if (o.carry || o.hold || o.stun > 0) continue; const d = (o.x - P.x) ** 2 + (o.y - P.y) ** 2; if (d < bd) { bd = d; gd = o; } }
+  if (!gd) return;
+  const a = Math.atan2(g.y - P.y, g.x - P.x); gd.x = P.x + Math.cos(a) * 24; gd.y = P.y + Math.sin(a) * 24; gd.kx = gd.ky = 0; gd.fall = 0; gd.tagCd = 0; gd.stun = 0;
+  arrest(gd, c);
+  if (G.caught) { MP.ack = { to: q.peer, seq: q.ds, t: 3 }; floatText(P.x, P.y - 44, g.name + ' (police) arrested you!', '#ffffff'); mpSend(); }
+}
+function startGhostDetain(g) {
+  if (!g || MP.pend || !(G.gcd <= 0)) return; MP.seq++; MP.pend = { peer: g.peer, seq: MP.seq, t: 6, ok: false, name: g.name }; G.gcd = 8; G.gnear = null;
+  const P = L.crowds[0].leader; floatText(P.x, P.y - 30, 'Detaining ' + g.name, '#ffffff'); sfx.tag(); shake(0.3); mpSend();
 }
 function mpTick(dt) {
   for (const g of MP.ghosts.values()) { const k = Math.min(1, dt * 6); g.x += (g.tx - g.x) * k; g.y += (g.ty - g.y) * k; g.face += Math.atan2(Math.sin(g.tf - g.face), Math.cos(g.tf - g.face)) * k; }
-  if (!MP.on) return; MP.t += dt; if (MP.t < 0.25) return; MP.t = 0;
-  const c = L.crowds[0], P = c.leader;
-  try { MP.room.presence({ kr: 1, n: G.name, x: Math.round(P.x), y: Math.round(P.y), fa: Math.round(P.face * 100) / 100, sz: G.police ? 1 : c.members.length + 1, f: G.leaderF ? 1 : 0, pl: G.police ? 1 : 0 }); } catch (e) {}
+  if (!MP.on) return;
+  while (MP.inbox.length) mpHandleDetain(MP.inbox.shift());
+  if (MP.ack) { MP.ack.t -= dt; if (MP.ack.t <= 0) MP.ack = null; }
+  if (MP.pend) {
+    MP.pend.t -= dt; const P = L.crowds[0].leader;
+    if (MP.pend.ok) { G.arrests++; floatText(P.x, P.y - 40, MP.pend.name + ' detained!', '#8cffb4'); sfx.free(); MP.pend = null; mpSend(); }
+    else if (MP.pend.t <= 0) { floatText(P.x, P.y - 40, MP.pend.name + ' slipped away', '#ff7a6e'); MP.pend = null; mpSend(); }
+  }
+  MP.t += dt; if (MP.t < 0.25) return; MP.t = 0; mpSend();
 }
 function drawGhosts(t, v) {
   for (const g of MP.ghosts.values()) {
     if (g.x < v.x0 - 200 || g.x > v.x1 + 200 || g.y < v.y0 - 200 || g.y > v.y1 + 200) continue;
-    const n = Math.min(g.sz - 1, 14);
-    for (let i = 0; i < n; i++) { const a = i * 2.4 + 0.5, r = 20 + Math.sqrt(i + 1) * 11; drawHuman(g.x + Math.cos(a) * r, g.y + Math.sin(a) * r + 10, g.face, g.fst[i % 4], null, 1, Math.sin(t * 5 + i) * 0.6, 0); }
-    ctx.strokeStyle = g.pol ? 'rgba(59,107,255,.9)' : 'rgba(255,216,74,.9)'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(g.x, g.y, 19 + Math.sin(t * 4) * 1.5, 0, TAU); ctx.stroke();
-    drawHuman(g.x, g.y, g.face, g.st, g.pol ? '#3b6bff' : COL.teal, 1.3, 0, 0);
-    ctx.save(); ctx.font = `800 11px ${BODYF}`; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(30,20,12,.75)'; ctx.fillStyle = '#ffe9a8';
-    const tx = g.name + (g.pol ? ' (police)' : ' · ' + g.sz); ctx.strokeText(tx, g.x, g.y + 26); ctx.fillText(tx, g.x, g.y + 26); ctx.restore();
-    if (g.sz >= LIVE_MIN && !g.pol) livePill(g.x, g.y + 42, t);
+    if (g.sf && !g.pol) ctx.globalAlpha = 0.45;
+    if (g.pol) {
+      const pg = g.pg; pg.x = g.x; pg.y = g.y; pg.face = g.face; pg.f = g.st.f;
+      ctx.strokeStyle = ((t * 6) | 0) % 2 ? 'rgba(255,59,48,.9)' : 'rgba(59,107,255,.9)'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(g.x, g.y, 19 + Math.sin(t * 4) * 1.5, 0, TAU); ctx.stroke();
+      ctx.save(); ctx.translate(g.x, g.y); ctx.scale(1.25, 1.25); ctx.translate(-g.x, -g.y); drawPoliceBody(pg, t); ctx.restore();
+    } else {
+      const n = Math.min(g.sz - 1, 14);
+      for (let i = 0; i < n; i++) { const a = i * 2.4 + 0.5, r = 20 + Math.sqrt(i + 1) * 11; drawHuman(g.x + Math.cos(a) * r, g.y + Math.sin(a) * r + 10, g.face, g.fst[i % 4], null, 1, Math.sin(t * 5 + i) * 0.6, 0); }
+      ctx.strokeStyle = 'rgba(255,216,74,.9)'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(g.x, g.y, 19 + Math.sin(t * 4) * 1.5, 0, TAU); ctx.stroke();
+      drawHuman(g.x, g.y, g.face, g.st, COL.teal, 1.3, 0, 0);
+    }
+    ctx.globalAlpha = 1;
+    ctx.save(); ctx.font = `800 11px ${BODYF}`; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(30,20,12,.75)'; ctx.fillStyle = g.pol ? '#bcd0ff' : '#ffe9a8';
+    const tx = g.name + (g.pol ? ' (police)' : ' · ' + g.sz); ctx.strokeText(tx, g.x, g.y + 28); ctx.fillText(tx, g.x, g.y + 28); ctx.restore();
+    if (g.sz >= LIVE_MIN && !g.pol) livePill(g.x, g.y + 44, t);
   }
 }
 
@@ -2041,7 +2090,7 @@ function showMenu() {
     stub: `<div class="stub-k">Your name</div><input id="nameIn" type="text" maxlength="14" placeholder="Type your name" autocomplete="off" value="${G.name.replace(/[^\w .\-]/g, '')}">
       <button class="btn" data-act="play">Play</button>
       <div class="stub-k">Mode</div><div class="pick"><button class="btn ghost ${G.mp ? '' : 'sel'}" data-act="mode-o">Offline, with bots</button><button class="btn ghost ${G.mp ? 'sel' : ''}" data-act="mode-m">Multiplayer</button></div>
-      ${G.mp ? '<div class="mute-note">Other signed-in players with access to this page appear as live kafilas. Bots fill in when nobody else is here. Police and arrests stay on your own screen.</div>' : ''}
+      ${G.mp ? '<div class="mute-note">Everyone who picks Multiplayer joins one shared room and sees each other. Pick Protester or Police: police players can detain real protesters. Bots fill in when nobody else is here.</div>' : ''}
       <div class="stub-k">You play as</div><div class="pick"><button class="btn ghost ${G.police ? '' : 'sel'}" data-act="role-p">Protester</button><button class="btn ghost ${G.police ? 'sel' : ''}" data-act="role-c">Police</button></div>
       <div class="stub-k">${G.police ? 'You are' : 'You lead as'}</div><div class="pick"><button class="btn ghost ${G.leaderF ? 'sel' : ''}" data-act="lead-f">Woman</button><button class="btn ghost ${G.leaderF ? '' : 'sel'}" data-act="lead-m">Man</button></div>
       <div class="stub-k">Top kafilas</div><ol class="hof" id="hof"><li style="grid-template-columns:1fr">Loading</li></ol>
@@ -2068,7 +2117,7 @@ const hudCache = {};
 function setText(id, v) { if (hudCache[id] !== v) { hudCache[id] = v; $('#' + id).textContent = v; } }
 function updateBoard() {
   const rows = L.crowds.filter((c) => !c.isPolice).map((c) => ({ n: c.isPlayer ? G.name : c.name, k: c.members.length + 1, me: c.isPlayer })).concat([...MP.ghosts.values()].filter((g) => !g.pol).map((g) => ({ n: g.name, k: g.sz, me: false }))).sort((a, b) => b.k - a.k);
-  const ol = $('#boardList'); const want = Math.min(COARSE ? 3 : 4, rows.length);
+  const ol = $('#boardList'); const want = Math.min(COARSE ? 5 : 10, rows.length);
   while (ol.children.length < want) { const li = document.createElement('li'); li.innerHTML = '<span class="r"></span><span class="n"></span><b></b>'; ol.appendChild(li); }
   while (ol.children.length > want) ol.lastChild.remove();
   for (let i = 0; i < want; i++) { const li = ol.children[i], r = rows[i]; li.className = r.me ? 'me' : ''; li.children[0].textContent = i + 1; li.children[1].textContent = r.n; li.children[2].textContent = r.k; }
@@ -2104,7 +2153,7 @@ function hud(dt) {
   $('#runBar').style.setProperty('--p', (G.caught ? clamp(G.brk, 0, 1) : G.stamina / STA_MAX).toFixed(3));
   const hideUi = !!(!G.police && (G.hide || G.near || G.ride || G.nearRide));
   $('#cheerBar').style.setProperty('--p', (G.hide ? (G.hideMax ? G.hideT / G.hideMax : 0) : hideUi ? 1 : 1 - G.cd / CHEER_CD).toFixed(3));
-  const dt2 = G.police && G.pnear && !G.pc; setText('runLab', G.caught ? 'BREAK FREE' : dt2 ? 'DETAIN' : 'RUN'); setText('runSub', G.caught ? 'TAP FAST' : 'SHIFT');
+  const dt2 = G.police && (G.pnear || G.gnear) && !G.pc; setText('runLab', G.caught ? 'BREAK FREE' : dt2 ? 'DETAIN' : 'RUN'); setText('runSub', G.caught ? 'TAP FAST' : 'SHIFT');
   setText('cheerLab', G.police ? 'ORDER' : G.hide ? 'COME OUT' : G.near ? 'HIDE' : G.ride ? 'JUMP OFF' : G.nearRide ? 'RIDE' : 'SPEECH');
   $('#btnRun').classList.toggle('alert', !!G.caught || !!dt2); $('#btnCheer').classList.toggle('hot', hideUi);
   G.boardT -= dt; if (G.boardT <= 0) { G.boardT = 0.3; updateBoard(); updateRoles(p); }
@@ -2636,7 +2685,7 @@ function render(t) {
   const dpr = view.dpr, w = view.w, h = view.h;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.fillStyle = '#8d8a83'; ctx.fillRect(0, 0, w, h);
   const p = L.crowds[0].leader, n = L.crowds[0].members.length;
-  let tz = clamp(w / 432, 1.14, 1.76); tz *= Math.max(0.74, 1 / (1 + n / 380));
+  let tz = COARSE ? clamp(w / 340, 1.32, 1.8) : clamp(w / 432, 1.14, 1.76); tz *= Math.max(COARSE ? 0.88 : 0.74, 1 / (1 + n / 380));
   let tx, ty;
   if (G.state === 'menu') { tx = CX; ty = 560; tz = clamp(w / 1100, 0.5, 1.1); } else { tx = p.x + p.vx * 0.45; ty = p.y + p.vy * 0.45 - 50; }
   cam.z = lerp(cam.z, tz, 0.06);
@@ -2734,7 +2783,9 @@ function frame(now) {
 resize();
 loadLevel(LEVEL);
 showMenu();
-if (location.hash === '#dev') window.__sr = { startTrip, startPoliceDetain, openShop, buy, closeShop, joinRing, ringFree, policePlay: updatePolicePlay, G, get L() { return L; }, startGame, levelWon, startTrip, arrestAlly, arrestNeutral, blk: blockedAt, throwGas, cam, arrest, enterHotel, leaveHotel, breakTap, doSpeech };
+if (location.hash === '#dev') window.__sr = { MP, startGhostDetain, startTrip, startPoliceDetain, openShop, buy, closeShop, joinRing, ringFree, policePlay: updatePolicePlay, G, get L() { return L; }, startGame, levelWon, startTrip, arrestAlly, arrestNeutral, blk: blockedAt, throwGas, cam, arrest, enterHotel, leaveHotel, breakTap, doSpeech };
 requestAnimationFrame((t) => { last = t; frame(t); });
 })();
 </script>
+
+</body></html>
