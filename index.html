@@ -33,7 +33,7 @@ body{margin:0;background:var(--ground);color:var(--ink);font:400 15px/1.45 var(-
 .band.off{background:rgba(255,255,255,.22)}
 .icon-btn{pointer-events:auto;width:38px;height:38px;border:0;border-radius:50%;background:var(--veil);color:var(--ink);display:grid;place-items:center;cursor:pointer;padding:0}
 .icon-btn:hover{background:rgba(90,55,38,.92)}
-.icon-btn:focus-visible,.act:focus-visible,.btn:focus-visible,#nameIn:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+.icon-btn:focus-visible,.act:focus-visible,.btn:focus-visible,#nameIn:focus-visible,#roomIn:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
 .icon-btn svg{width:18px;height:18px;fill:currentColor}
 .meter{display:flex;flex-direction:column;gap:4px;max-width:520px;width:100%}
 .meter .lab{display:flex;justify-content:space-between;font:800 11px var(--font-body);letter-spacing:.14em;text-transform:uppercase;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.7)}
@@ -132,7 +132,8 @@ details li{margin:2px 0}
 .stats b{font:400 15px var(--font-display)}
 .stub-k{font:800 11px var(--font-body);letter-spacing:.18em;text-transform:uppercase;opacity:.75}
 .stub-v{font:400 34px/1 var(--font-display);font-variant-numeric:tabular-nums}
-#nameIn{width:100%;box-sizing:border-box;border:2px solid var(--paper-ink);border-radius:10px;background:rgba(255,255,255,.35);color:var(--paper-ink);font:800 16px var(--font-body);padding:9px 12px;-webkit-user-select:text;user-select:text}
+#nameIn,#roomIn{width:100%;box-sizing:border-box;border:2px solid var(--paper-ink);border-radius:10px;background:rgba(255,255,255,.35);color:var(--paper-ink);font:800 16px var(--font-body);padding:9px 12px;-webkit-user-select:text;user-select:text}
+#roomIn{text-transform:lowercase;letter-spacing:.12em}
 #nameIn::placeholder{color:rgba(43,20,8,.55)}
 .btn{appearance:none;border:0;cursor:pointer;border-radius:12px;padding:14px 16px;background:var(--paper-ink);color:var(--paper);font:400 18px var(--font-display);letter-spacing:.05em;text-align:center}
 .btn:hover{background:#4a2a14}
@@ -254,13 +255,14 @@ const TP = {
 /* ---------- state ---------- */
 const G = {
   state: 'menu', level: 1, score: 0, lives: 3, time: 0, hype: 0, need: 100, invuln: 0, name: 'Player',
-  cd: 0, stamina: STA_MAX, staDelay: 0, shake: 0, best: 0, rec: 0, lost: 0, det: 0, hints: {}, popT: 0, leaderF: true, police: false, coins: 0, wpn: 0, gnear: null, gcd: 0, sd: 0, sdT: 0, job: null, jobCd: 0, mp: false, flag: false, shopCd: 0, donT: 0, pc: null, pnear: null, pstun: 0, arrests: 0, quota: 14, threat: 0, gassed: 0, jetted: 0, maxK: 1, boardT: 0,
+  cd: 0, stamina: STA_MAX, staDelay: 0, shake: 0, best: 0, rec: 0, lost: 0, det: 0, hints: {}, popT: 0, leaderF: true, police: false, coins: 0, wpn: 0, room: '', gnear: null, gcd: 0, sd: 0, sdT: 0, job: null, jobCd: 0, mp: false, flag: false, shopCd: 0, donT: 0, pc: null, pnear: null, pstun: 0, arrests: 0, quota: 14, threat: 0, gassed: 0, jetted: 0, maxK: 1, boardT: 0,
   caught: null, brk: 0, ride: null, nearRide: null, rx: 0, ry: 0, hide: null, hideT: 0, hideMax: 1, hideAge: 0, safeT: 0, near: null,
 };
-try { G.police = localStorage.getItem('kafilaRole') === 'police'; G.mp = localStorage.getItem('kafilaMode') === 'mp'; } catch (e) {}
+try { G.police = localStorage.getItem('kafilaRole') === 'police'; G.mp = localStorage.getItem('kafilaMode') === 'mp'; G.room = cleanRoom(localStorage.getItem('kafilaRoom')); } catch (e) {}
+if (!G.room) G.room = Math.random().toString(36).replace(/[^a-z0-9]/g, '').slice(2, 7) || 'kafila';
 try { G.best = +localStorage.getItem('kafilaRushBest') || 0; G.name = (localStorage.getItem('kafilaName') || '').slice(0, 14); } catch (e) {}
 let L = null;
-const MP = { on: false, room: null, off: null, ghosts: new Map(), cut: 0, t: 0, busy: false, me: null, seq: 0, pend: null, ack: null, inbox: [], seen: {}, broken: new Set() };
+const MP = { code: 'open', on: false, room: null, off: null, ghosts: new Map(), cut: 0, t: 0, busy: false, me: null, seq: 0, pend: null, ack: null, inbox: [], seen: {}, broken: new Set() };
 const cam = { x: CX, y: 600, z: 1 };
 const view = { w: 800, h: 600, dpr: 1 };
 
@@ -313,6 +315,7 @@ let DBH = null, UID = null;
   } catch (e) { DBH = null; }
   if (G.state === 'menu') fillHof();
 })();
+function cleanRoom(s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 12); }
 function cleanName(s) { return String(s || '').replace(/[\u0000-\u001f<>&"']/g, '').trim().slice(0, 14); }
 function localTop() { try { return JSON.parse(localStorage.getItem('kafilaRushTop') || '[]'); } catch (e) { return []; } }
 async function submitScore() {
@@ -1773,7 +1776,7 @@ function mpBurst(o) { for (let k = 0; k < 20; k++) L.parts.push({ x: o.x + Math.
 function mpPeers(peers) {
   const seen = new Set();
   for (const pr of peers) {
-    if (pr.isMe) { if (pr.sameTab) MP.me = pr.peer; continue; }
+    if (pr.sameTab) { MP.me = pr.peer; continue; }
     const d = pr.presence; if (pr.kind !== 'viewer' || !d || d.kr !== 1) continue;
     const x = +d.x, y = +d.y; if (!isFinite(x) || !isFinite(y)) continue;
     seen.add(pr.peer); let g = MP.ghosts.get(pr.peer);
@@ -1791,17 +1794,20 @@ function mpPeers(peers) {
 }
 async function mpEnter() {
   if (MP.on) return true;
-  toast('Connecting to multiplayer…', 2500);
-  let r = null;
-  try { r = (window.claude && claude.use) ? await Promise.race([claude.use('room'), new Promise((res) => setTimeout(() => res(null), 4000))]) : null; } catch (e) { r = null; }
-  if (!r) { toast('Multiplayer is not available here. It runs only inside Claude for signed-in viewers with access to the page. Playing offline with bots.', 7000); return false; }
-  let rm = r; try { rm = await r.join('kafila-arena'); } catch (e) { rm = r; }
+  const code = cleanRoom(G.room) || 'open'; MP.code = code;
+  toast('Connecting to room ' + code.toUpperCase() + '…', 3000);
+  let r = null, rm = null;
+  try { r = (window.claude && claude.use) ? await Promise.race([claude.use('room'), new Promise((res) => setTimeout(() => res(null), 3000))]) : null; } catch (e) { r = null; }
+  if (r) { rm = r; try { rm = await r.join('kafila-' + code); } catch (e) { rm = r; } }
+  if (!rm) { try { rm = await mqttRoom(code); } catch (e) { rm = null; } }
+  if (!rm) { MP.msg = 'Could not connect to multiplayer. Check your internet connection and try again. Playing offline with bots.'; toast(MP.msg, 7000); return false; }
   MP.room = rm; MP.on = true; MP.t = 0; MP.seq = 0; MP.pend = null; MP.ack = null; MP.inbox = []; MP.seen = {}; MP.broken = new Set();
   try { MP.off = rm.onPeers((ch) => mpPeers(ch.peers), () => {}); } catch (e) {}
-  await new Promise((res) => setTimeout(res, 1600));
+  try { rm.presence({ kr: 1, n: G.name, x: 1480, y: 7000, fa: 0, sz: 1, f: G.leaderF ? 1 : 0, pl: G.police ? 1 : 0, sf: 1, br: [], dt: null, ds: 0, ak: null, at: null }); } catch (e) {}
+  await new Promise((res) => setTimeout(res, 2200));
   MP.cut = Math.min(MP.ghosts.size, 3);
-  toast(MP.ghosts.size ? MP.ghosts.size + ' other player' + (MP.ghosts.size > 1 ? 's' : '') + ' in the room. Bots step aside for them.' : 'Multiplayer on. Nobody else is here yet, so bots play with you. Others who join later appear on your map.', 5000);
-  return true;
+  MP.msg = (MP.ghosts.size ? MP.ghosts.size + ' other player' + (MP.ghosts.size > 1 ? 's' : '') + ' in room ' + code.toUpperCase() + '. Bots step aside for them.' : 'Room ' + code.toUpperCase() + ' is open. Nobody else is here yet, so bots play with you. Friends who join later appear on your map.');
+  toast(MP.msg, 5500); return true;
 }
 function mpStop() {
   if (!MP.on) return; MP.on = false; MP.cut = 0;
@@ -1858,6 +1864,65 @@ function drawGhosts(t, v) {
     const tx = g.name + (g.pol ? ' (police)' : ' · ' + g.sz); ctx.strokeText(tx, g.x, g.y + 28); ctx.fillText(tx, g.x, g.y + 28); ctx.restore();
     if (g.sz >= LIVE_MIN && !g.pol) livePill(g.x, g.y + 44, t);
   }
+}
+
+/* ---------- tiny MQTT-over-WebSocket relay, so friends can play on any website copy (no server of mine) ---------- */
+const BROKERS = ['wss://broker.hivemq.com:8884/mqtt', 'wss://broker.emqx.io:8084/mqtt', 'wss://test.mosquitto.org:8081/'];
+function mqEnc(str) { const b = new TextEncoder().encode(str); return [b.length >> 8, b.length & 255, ...b]; }
+function mqLen(n) { const o = []; do { let d = n % 128; n = Math.floor(n / 128); if (n > 0) d |= 128; o.push(d); } while (n > 0); return o; }
+function mqPkt(b0, body) { return new Uint8Array([b0, ...mqLen(body.length), ...body]); }
+function mqttOpen(url, id, onMsg) {
+  return new Promise((resolve) => {
+    let ws, done = false, buf = new Uint8Array(0), ping = 0, subOk = false;
+    const fin = (v) => { if (done) return; done = true; clearTimeout(to); resolve(v); };
+    const to = setTimeout(() => { try { ws.close(); } catch (e) {} fin(null); }, 6500);
+    try { ws = new WebSocket(url, 'mqtt'); } catch (e) { return fin(null); }
+    ws.binaryType = 'arraybuffer';
+    const conn = { send(topic, payload) { if (ws.readyState !== 1) return; const pb = typeof payload === 'string' ? new TextEncoder().encode(payload) : payload; try { ws.send(mqPkt(0x30, [...mqEnc(topic), ...pb])); } catch (e) {} },
+      close() { clearInterval(ping); try { ws.send(new Uint8Array([0xe0, 0])); } catch (e) {} try { ws.close(); } catch (e) {} }, get open() { return ws.readyState === 1; }, onclose: null };
+    ws.onopen = () => { ws.send(mqPkt(0x10, [...mqEnc('MQTT'), 4, 2, 0, 30, ...mqEnc(id)])); };
+    ws.onerror = () => fin(null);
+    ws.onclose = () => { clearInterval(ping); if (!done) fin(null); else if (conn.onclose) conn.onclose(); };
+    ws.onmessage = (ev) => {
+      const nb = new Uint8Array(ev.data); const m = new Uint8Array(buf.length + nb.length); m.set(buf); m.set(nb, buf.length); buf = m;
+      for (;;) {
+        if (buf.length < 2) return;
+        let mul = 1, len = 0, i = 1, b;
+        do { if (i >= buf.length) return; b = buf[i++]; len += (b & 127) * mul; mul *= 128; } while (b & 128 && i < 5);
+        if (buf.length < i + len) return;
+        const type = buf[0] >> 4, body = buf.slice(i, i + len); buf = buf.slice(i + len);
+        if (type === 2) { if (body[1] !== 0) { fin(null); return; } ws.send(mqPkt(0x82, [0, 1, ...mqEnc('kafilarush/v1/' + conn.room + '/+'), 0])); }
+        else if (type === 9) { if (!subOk) { subOk = true; ping = setInterval(() => { try { ws.send(new Uint8Array([0xc0, 0])); } catch (e) {} }, 20000); fin(conn); } }
+        else if (type === 3) { const tl = (body[0] << 8) | body[1], topic = new TextDecoder().decode(body.slice(2, 2 + tl)); onMsg(topic, body.slice(2 + tl)); }
+      }
+    };
+    conn.room = mqttOpen.room;
+  });
+}
+async function mqttRoom(code) {
+  const id = 'k' + Math.random().toString(36).slice(2, 11), base = 'kafilarush/v1/' + code + '/';
+  const peers = new Map(), mine = {}, cbs = []; let dirty = false, conn = null, last = 0;
+  const onMsg = (topic, payload) => {
+    if (topic.indexOf(base) !== 0 || payload.length > 3000) return; const pid = topic.slice(base.length); if (pid === id || !/^[a-z0-9]{6,12}$/.test(pid)) return;
+    if (!payload.length) { if (peers.delete(pid)) dirty = true; return; }
+    try { const q = JSON.parse(new TextDecoder().decode(payload)); if (q && typeof q === 'object' && !Array.isArray(q)) { peers.set(pid, { p: q, t: Date.now() }); dirty = true; } } catch (e) {}
+  };
+  const urls = window.__KR_BROKERS || BROKERS;
+  for (const u of urls) { mqttOpen.room = code; conn = await mqttOpen(u, id, onMsg); if (conn) break; }
+  if (!conn) return null;
+  const pub = () => { last = Date.now(); conn.send(base + id, JSON.stringify(mine)); };
+  const tick = setInterval(() => {
+    const now = Date.now();
+    for (const [k, v] of peers) if (now - v.t > 7000) { peers.delete(k); dirty = true; }
+    if (now - last > 2000 && mine.kr) pub();
+    if (dirty) { dirty = false; const l = [{ peer: id, isMe: true, sameTab: true, kind: 'viewer', guest: false, by: null, presence: { ...mine }, updatedAt: now }]; for (const [k, v] of peers) l.push({ peer: k, isMe: false, sameTab: false, kind: 'viewer', guest: false, by: null, presence: v.p, updatedAt: v.t }); for (const f of cbs) { try { f({ peers: l }); } catch (e) {} } }
+  }, 100);
+  return {
+    presence(patch) { for (const k in patch) { if (patch[k] === null) delete mine[k]; else mine[k] = patch[k]; } pub(); return Promise.resolve(); },
+    onPeers(f) { cbs.push(f); dirty = true; return () => { const i = cbs.indexOf(f); if (i >= 0) cbs.splice(i, 1); }; },
+    join() { return Promise.resolve(this); },
+    leave() { clearInterval(tick); try { conn.send(base + id, ''); } catch (e) {} conn.close(); },
+  };
 }
 
 const LIVE_MIN = 10;
@@ -2028,7 +2093,7 @@ function gameOver() {
 const LEVEL = 3;
 function startGame() {
   if (MP.busy) return; G.coins = 0; G.wpn = 0; G.sd = 0; G.job = null; G.flag = false; G.score = 0; G.lives = 3; G.hints = {};
-  const go = () => { MP.busy = false; loadLevel(LEVEL); beginLevel(); };
+  const go = () => { MP.busy = false; loadLevel(LEVEL); beginLevel(); if (G.mp && MP.msg) { const m = MP.msg; MP.msg = ''; setTimeout(() => toast(m, 7000), 3500); } };
   if (G.mp && !MP.on) { MP.busy = true; mpEnter().then(go, go); } else go();
 }
 function nextLevel() { G.lives = Math.min(3, G.lives + 1); loadLevel(G.level + 1); beginLevel(); }
@@ -2090,15 +2155,16 @@ function showMenu() {
     stub: `<div class="stub-k">Your name</div><input id="nameIn" type="text" maxlength="14" placeholder="Type your name" autocomplete="off" value="${G.name.replace(/[^\w .\-]/g, '')}">
       <button class="btn" data-act="play">Play</button>
       <div class="stub-k">Mode</div><div class="pick"><button class="btn ghost ${G.mp ? '' : 'sel'}" data-act="mode-o">Offline, with bots</button><button class="btn ghost ${G.mp ? 'sel' : ''}" data-act="mode-m">Multiplayer</button></div>
-      ${G.mp ? '<div class="mute-note">Everyone who picks Multiplayer joins one shared room and sees each other. Pick Protester or Police: police players can detain real protesters. Bots fill in when nobody else is here.</div>' : ''}
+      ${G.mp ? `<div class="stub-k">Room code</div><input id="roomIn" type="text" maxlength="12" autocomplete="off" autocapitalize="off" value="${G.room}">
+      <div class="mute-note">Send this code to your friends. Everyone who types the same code and taps Play joins one room. Pick Protester or Police: police can detain real protesters. Bots fill in when nobody else is here.</div>` : ''}
       <div class="stub-k">You play as</div><div class="pick"><button class="btn ghost ${G.police ? '' : 'sel'}" data-act="role-p">Protester</button><button class="btn ghost ${G.police ? 'sel' : ''}" data-act="role-c">Police</button></div>
       <div class="stub-k">${G.police ? 'You are' : 'You lead as'}</div><div class="pick"><button class="btn ghost ${G.leaderF ? 'sel' : ''}" data-act="lead-f">Woman</button><button class="btn ghost ${G.leaderF ? '' : 'sel'}" data-act="lead-m">Man</button></div>
       <div class="stub-k">Top kafilas</div><ol class="hof" id="hof"><li style="grid-template-columns:1fr">Loading</li></ol>
-      <div class="mute-note">Satire. All characters are fictional. Version 11</div>`,
+      <div class="mute-note">Satire. All characters are fictional. Version 12</div>`,
   });
   fillHof();
 }
-function readName() { const v = cleanName($('#nameIn') ? $('#nameIn').value : G.name); G.name = v || 'Player'; try { localStorage.setItem('kafilaName', G.name); } catch (e) {} }
+function readName() { const v = cleanName($('#nameIn') ? $('#nameIn').value : G.name); G.name = v || 'Player'; if ($('#roomIn')) G.room = cleanRoom($('#roomIn').value) || G.room; try { localStorage.setItem('kafilaName', G.name); localStorage.setItem('kafilaRoom', G.room); } catch (e) {} }
 $('#screen').addEventListener('click', (e) => {
   const b = e.target.closest('[data-act]'); if (!b) return;
   ensureAudio();
@@ -2117,6 +2183,7 @@ const hudCache = {};
 function setText(id, v) { if (hudCache[id] !== v) { hudCache[id] = v; $('#' + id).textContent = v; } }
 function updateBoard() {
   const rows = L.crowds.filter((c) => !c.isPolice).map((c) => ({ n: c.isPlayer ? G.name : c.name, k: c.members.length + 1, me: c.isPlayer })).concat([...MP.ghosts.values()].filter((g) => !g.pol).map((g) => ({ n: g.name, k: g.sz, me: false }))).sort((a, b) => b.k - a.k);
+  { const bt = $('#board .bt'), tx = MP.on ? 'Room ' + MP.code.toUpperCase() : 'Biggest kafila'; if (hudCache.bt !== tx) { hudCache.bt = tx; bt.textContent = tx; } }
   const ol = $('#boardList'); const want = Math.min(COARSE ? 5 : 10, rows.length);
   while (ol.children.length < want) { const li = document.createElement('li'); li.innerHTML = '<span class="r"></span><span class="n"></span><b></b>'; ol.appendChild(li); }
   while (ol.children.length > want) ol.lastChild.remove();
